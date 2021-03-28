@@ -1,0 +1,32 @@
+trigger:
+- master
+
+stages:
+- stage: 'Build Test'
+  displayName: 'Build and Test'
+  variables: 
+    GOVERSION: '1.16.2'   #This is the version of GO Lang
+    CGO_ENABLED: '0'
+    GOOS: 'linux'
+    GOARCH: 'amd64'
+  jobs:
+    job: BuildTestBackend
+    displayName: 'Build and Test Go Backend'
+    pool:
+      vmImage: 'Ubuntu 18.04'
+    steps:
+    - task: GoTool@0
+      input: 
+        version: $(GOVERSION)
+      displayName: 'Install and select Go Version $(GOVERSION)'
+
+    - script:
+          go get -u github.com/jstemmer/go-junit-report 2>&1
+          go get -u github.com/axw/gocov/gocov 2>&1
+          go get -u github.com/AlekSi/gocov-xml 2>&1
+
+    - task: Go@0
+      inputs:
+        command: 'build'
+        arguments: '-a -o serviantestchallenge'
+      displayName: 'Build Go App'

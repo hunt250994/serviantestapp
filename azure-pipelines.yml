@@ -1,31 +1,26 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
-
-trigger:
+trigger: 
 - master
 
 stages:
-- stage: 'Build Test'
-  displayName: 'Build and Test'
-  variables: 
-    GOVERSION: '1.16.2'   #This is the version of GO Lang
-    CGO_ENABLED: '0'
-    GOOS: 'linux'
-    GOARCH: 'amd64'
-  jobs:
-    job: BuildTestBackend
+  - stage: 'Build Test'
+    displayName: 'Build and Test'
+    variables: 
+      GOVERSION: '1.16.2'   #This is the version of GO Lang
+      CGO_ENABLED: '0'
+      GOOS: 'linux'
+      GOARCH: 'amd64'
+ 
+jobs: 
+  - job: BuildTestBackend
     displayName: 'Build and Test Go Backend'
     pool:
       vmImage: 'Ubuntu 18.04'
     steps:
-    - task: GoTool@0
-      input: 
-        version: $(GOVERSION)
+      - task: GoTool@0
+    input: 
+      version: $(GOVERSION)
       displayName: 'Install and select Go Version $(GOVERSION)'
-
-    - script:
+  - script:
           go get -u github.com/jstemmer/go-junit-report 2>&1
           go get -u github.com/axw/gocov/gocov 2>&1
           go get -u github.com/AlekSi/gocov-xml 2>&1
@@ -40,28 +35,27 @@ stages:
         fi
       displayName: 'Run Unit tests and convert results'
       failonStderr: true
-    - task: $Go@0
-      inputs:
-        command: 'build'
-        arguments: '-a -o serviantestchallenge'
-      displayName: 'Build Go App'
-    - publish: '$(Build.Source.Directory)/demo'
-      artifact: 'Executable'
-      displayName: 'Publish Pipeline Artifact'
 
-    - task: PublishTestResults@2
-      condition: always()
-      inputs:
+  - task: $Go@0
+    inputs:
+      command: 'build'
+      arguments: '-a -o serviantestchallenge'
+      displayName: 'Build Go App'
+  - publish: '$(Build.Source.Directory)/demo'
+    artifact: 'Executable'
+    displayName: 'Publish Pipeline Artifact'
+
+  - task: PublishTestResults@2
+    condition: always()
+    inputs:
         testResultsFormat: 'JUnit'
         testResultsFile: '*report*.xml'
         searchFolder: '$(Build.SourceDirectory)'
-      displayName: 'Publish Test Results'
+    displayName: 'Publish Test Results'
 
-      - task: PublishCodeCoverageResults@1
-        condition: always()
-        inputs:
+  - task: PublishCodeCoverageResults@1
+    condition: always()
+    inputs:
           codeCoverageTool: 'Cobertura'
           summaryFileLocation: '$(Build.SourceDirectory)/demo-coverage.xml'
           displayName: 'Publish Code Coverage Results'
-
-          
